@@ -8,6 +8,7 @@ const paymentForInput = document.getElementById("payment-for");
 const receiptPreviewItems = document.getElementById("receipt-preview-items");
 const receiptSalesPreview = document.querySelector("[data-receipt-sales-preview]");
 const downloadReceiptButton = document.getElementById("download-receipt");
+const shareReceiptButton = document.getElementById("share-receipt");
 const receiptPreview = document.getElementById("receipt-preview");
 const previewReceiptButton = document.getElementById("preview-receipt");
 const receiptPreviewDialog = document.getElementById("receipt-preview-dialog");
@@ -217,37 +218,85 @@ downloadReceiptButton.addEventListener("click", async () => {
     return;
   }
 
-  const originalText = downloadReceiptButton.textContent;
-  downloadReceiptButton.disabled = true;
-  downloadReceiptButton.textContent = "Preparing PDF...";
-
-  try {
-    const canvas = await html2canvas(receiptPreview, {
-      scale: 2,
-      backgroundColor: "#ffffff",
-      useCORS: true,
-    });
-    const image = canvas.toDataURL("image/png");
-    const pdf = new jspdf.jsPDF("p", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imageWidth = pageWidth - 20;
-    const imageHeight = canvas.height * imageWidth / canvas.width;
-    const height = Math.min(imageHeight, pageHeight - 20);
-    const width = height === imageHeight ? imageWidth : canvas.width * height / canvas.height;
-
-    pdf.addImage(image, "PNG", (pageWidth - width) / 2, 10, width, height);
-
-    const receiptNumber = receiptForm.elements.namedItem("receiptNumber").value.trim();
-    pdf.save(`${receiptNumber || "receipt"}.pdf`);
-  } catch (error) {
-    console.error("Could not create receipt PDF:", error);
-    alert("Could not create the PDF. Please try again.");
-  } finally {
-    downloadReceiptButton.disabled = false;
-    downloadReceiptButton.textContent = originalText;
-  }
+  await prepareReceiptPdf(downloadReceiptButton, (pdf) => pdf.save(getReceiptPdfFilename()));
 });
 
 updateSalesItemRemoveButtons();
 updateReceiptType();
+
+async function createReceiptPdf() {
+  updateReceiptPreview();
+  const canvas = await html2canvas(receiptPreview, {
+    scale: 2,
+    backgroundColor: "#ffffff",
+    useCORS: true,
+  });
+  const image = canvas.toDataURL("image/png");
+  const pdf = new jspdf.jsPDF("p", "mm", "a4");
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const imageWidth = pageWidth - 20;
+  const imageHeight = canvas.height * imageWidth / canvas.width;
+  const height = Math.min(imageHeight, pageHeight - 20);
+  const width = height === imageHeight ? imageWidth : canvas.width * height / canvas.height;
+
+  pdf.addImage(image, "PNG", (pageWidth - width) / 2, 10, width, height);
+  return pdf;
+}
+
+function getReceiptPdfFilename() {
+  const receiptNumber = receiptForm.elements.namedItem("receiptNumber").value.trim();
+  return `${receiptNumber || "receipt"}.pdf`;
+}
+
+async function prepareReceiptPdf(button, operation) {
+  const originalContent = button.innerHTML;
+  button.disabled = true;
+  button.textContent = "Preparing PDF...";
+
+  try {
+    const pdf = await createReceiptPdf();
+    await operation(pdf);
+  } catch (error) {
+    console.error("Could not create or share receipt PDF:", error);
+    alert("Could not create or share the PDF. Please try again.");
+  } finally {
+    button.disabled = false;
+    button.innerHTML = originalContent;
+  }
+}
+
+shareReceiptButton.addEventListener("click", async () => {
+  if (!receiptForm.checkValidity()) {
+    receiptForm.reportValidity();
+    return;
+  }
+  if (typeof html2canvas !== "function" || typeof jspdf !== "object") {
+    alert("PDF download libraries could not be loaded. Check your internet connection and try again.");
+    return;
+  }
+
+  await prepareReceiptPdf(shareReceiptButton, async (pdf) => {
+    if (typeof File !== "function" || typeof navigator.share !== "function"
+      || typeof navigator.canShare !== "function") {
+      pdf.save(getReceiptPdfFilename());
+      alert("File sharing isn't supported in this browser. The receipt PDF has been downloaded instead.");
+      return;
+    }
+
+    const file = new File([pdf.output("blob")], getReceiptPdfFilename(), { type: "application/pdf" });
+    if (!navigator.canShare({ files: [file] })) {
+      pdf.save(getReceiptPdfFilename());
+      alert("File sharing isn't supported in this browser. The receipt PDF has been downloaded instead.");
+      return;
+    }
+
+    try {
+      await navigator.share({ files: [file], title: "Receipt" });
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        throw error;
+      }
+    }
+  });
+});
