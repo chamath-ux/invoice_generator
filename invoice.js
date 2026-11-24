@@ -5,6 +5,7 @@ const previewItems = document.getElementById("preview-items");
 const currencyInput = document.getElementById("currency");
 const addItemButton = document.getElementById("add-item");
 const downloadInvoiceButton = document.getElementById("download-invoice");
+const shareInvoiceButton = document.getElementById("share-invoice");
 const invoicePreview = document.getElementById("invoice-preview");
 const previewInvoiceButton = document.getElementById("preview-invoice");
 const previewDialog = document.getElementById("invoice-preview-dialog");
@@ -321,37 +322,7 @@ downloadInvoiceButton.addEventListener("click", async () => {
     return;
   }
 
-  const originalText = downloadInvoiceButton.textContent;
-  downloadInvoiceButton.disabled = true;
-  downloadInvoiceButton.textContent = "Preparing PDF...";
-
-  try {
-    updatePreview();
-    const canvas = await html2canvas(invoicePreview, {
-      scale: 2,
-      backgroundColor: "#ffffff",
-      useCORS: true,
-    });
-    const image = canvas.toDataURL("image/png");
-    const pdf = new jspdf.jsPDF("p", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imageWidth = pageWidth - 20;
-    const imageHeight = canvas.height * imageWidth / canvas.width;
-    const height = Math.min(imageHeight, pageHeight - 20);
-    const width = height === imageHeight ? imageWidth : canvas.width * height / canvas.height;
-
-    pdf.addImage(image, "PNG", (pageWidth - width) / 2, 10, width, height);
-
-    const invoiceNumber = invoiceForm.elements.namedItem("invoiceNumber").value.trim();
-    pdf.save(`${invoiceNumber || "invoice"}.pdf`);
-  } catch (error) {
-    console.error("Could not create invoice PDF:", error);
-    alert("Could not create the PDF. Please try again.");
-  } finally {
-    downloadInvoiceButton.disabled = false;
-    downloadInvoiceButton.textContent = originalText;
-  }
+  await prepareInvoicePdf(downloadInvoiceButton, (pdf) => pdf.save(getInvoicePdfFilename()));
 });
 
 invoiceItems.addEventListener("click", (event) => {
@@ -368,3 +339,80 @@ invoiceItems.addEventListener("click", (event) => {
 restoreBusinessInfo();
 updateItemRemoveButtons();
 updatePreview();
+
+async function createInvoicePdf() {
+  updatePreview();
+  const canvas = await html2canvas(invoicePreview, {
+    scale: 2,
+    backgroundColor: "#ffffff",
+    useCORS: true,
+  });
+  const image = canvas.toDataURL("image/png");
+  const pdf = new jspdf.jsPDF("p", "mm", "a4");
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const imageWidth = pageWidth - 20;
+  const imageHeight = canvas.height * imageWidth / canvas.width;
+  const height = Math.min(imageHeight, pageHeight - 20);
+  const width = height === imageHeight ? imageWidth : canvas.width * height / canvas.height;
+
+  pdf.addImage(image, "PNG", (pageWidth - width) / 2, 10, width, height);
+  return pdf;
+}
+
+function getInvoicePdfFilename() {
+  const invoiceNumber = invoiceForm.elements.namedItem("invoiceNumber").value.trim();
+  return `${invoiceNumber || "invoice"}.pdf`;
+}
+
+async function prepareInvoicePdf(button, operation) {
+  const originalContent = button.innerHTML;
+  button.disabled = true;
+  button.textContent = "Preparing PDF...";
+
+  try {
+    const pdf = await createInvoicePdf();
+    await operation(pdf);
+  } catch (error) {
+    console.error("Could not create or share invoice PDF:", error);
+    alert("Could not create or share the PDF. Please try again.");
+  } finally {
+    button.disabled = false;
+    button.innerHTML = originalContent;
+  }
+}
+
+shareInvoiceButton.addEventListener("click", async () => {
+  if (!invoiceForm.checkValidity()) {
+    invoiceForm.reportValidity();
+    return;
+  }
+  if (typeof html2canvas !== "function" || typeof jspdf !== "object") {
+    alert("PDF download libraries could not be loaded. Check your internet connection and try again.");
+    return;
+  }
+
+  await prepareInvoicePdf(shareInvoiceButton, async (pdf) => {
+    if (typeof File !== "function" || typeof navigator.share !== "function"
+      || typeof navigator.canShare !== "function") {
+      pdf.save(getInvoicePdfFilename());
+      alert("File sharing isn't supported in this browser. The invoice PDF has been downloaded instead.");
+      return;
+    }
+
+    const file = new File([pdf.output("blob")], getInvoicePdfFilename(), { type: "application/pdf" });
+    if (!navigator.canShare({ files: [file] })) {
+      pdf.save(getInvoicePdfFilename());
+      alert("File sharing isn't supported in this browser. The invoice PDF has been downloaded instead.");
+      return;
+    }
+
+    try {
+      await navigator.share({ files: [file], title: "Invoice" });
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        throw error;
+      }
+    }
+  });
+});
