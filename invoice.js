@@ -5,7 +5,7 @@ const previewItems = document.getElementById("preview-items");
 const currencyInput = document.getElementById("currency");
 const addItemButton = document.getElementById("add-item");
 const downloadInvoiceButton = document.getElementById("download-invoice");
-const shareInvoiceButton = document.getElementById("share-invoice");
+const printInvoiceButton = document.getElementById("print-invoice");
 const invoicePreview = document.getElementById("invoice-preview");
 const previewInvoiceButton = document.getElementById("preview-invoice");
 const previewDialog = document.getElementById("invoice-preview-dialog");
@@ -325,6 +325,16 @@ downloadInvoiceButton.addEventListener("click", async () => {
   await prepareInvoicePdf(downloadInvoiceButton, (pdf) => pdf.save(getInvoicePdfFilename()));
 });
 
+printInvoiceButton.addEventListener("click", () => {
+  if (!invoiceForm.checkValidity()) {
+    invoiceForm.reportValidity();
+    return;
+  }
+
+  updatePreview();
+  window.print();
+});
+
 invoiceItems.addEventListener("click", (event) => {
   const removeButton = event.target.closest(".item-remove");
   if (!removeButton || invoiceItems.querySelectorAll("[data-item-row]").length === 1) {
@@ -374,45 +384,10 @@ async function prepareInvoicePdf(button, operation) {
     const pdf = await createInvoicePdf();
     await operation(pdf);
   } catch (error) {
-    console.error("Could not create or share invoice PDF:", error);
-    alert("Could not create or share the PDF. Please try again.");
+    console.error("Could not create invoice PDF:", error);
+    alert("Could not create the PDF. Please try again.");
   } finally {
     button.disabled = false;
     button.innerHTML = originalContent;
   }
 }
-
-shareInvoiceButton.addEventListener("click", async () => {
-  if (!invoiceForm.checkValidity()) {
-    invoiceForm.reportValidity();
-    return;
-  }
-  if (typeof html2canvas !== "function" || typeof jspdf !== "object") {
-    alert("PDF download libraries could not be loaded. Check your internet connection and try again.");
-    return;
-  }
-
-  await prepareInvoicePdf(shareInvoiceButton, async (pdf) => {
-    if (typeof File !== "function" || typeof navigator.share !== "function"
-      || typeof navigator.canShare !== "function") {
-      pdf.save(getInvoicePdfFilename());
-      alert("File sharing isn't supported in this browser. The invoice PDF has been downloaded instead.");
-      return;
-    }
-
-    const file = new File([pdf.output("blob")], getInvoicePdfFilename(), { type: "application/pdf" });
-    if (!navigator.canShare({ files: [file] })) {
-      pdf.save(getInvoicePdfFilename());
-      alert("File sharing isn't supported in this browser. The invoice PDF has been downloaded instead.");
-      return;
-    }
-
-    try {
-      await navigator.share({ files: [file], title: "Invoice" });
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        throw error;
-      }
-    }
-  });
-});
