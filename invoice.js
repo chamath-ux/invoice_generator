@@ -6,6 +6,10 @@ const currencyInput = document.getElementById("currency");
 const addItemButton = document.getElementById("add-item");
 const downloadInvoiceButton = document.getElementById("download-invoice");
 const invoicePreview = document.getElementById("invoice-preview");
+const previewInvoiceButton = document.getElementById("preview-invoice");
+const previewDialog = document.getElementById("invoice-preview-dialog");
+const previewDialogContent = document.getElementById("invoice-dialog-content");
+const closePreviewButton = document.getElementById("close-invoice-preview");
 const businessLogoInput = document.getElementById("business-logo");
 const businessLogoStatus = document.getElementById("business-logo-status");
 const removeBusinessLogoButton = document.getElementById("remove-business-logo");
@@ -206,10 +210,42 @@ function updatePreview() {
   document.querySelector('[data-preview="taxRateLabel"]').textContent = `(${taxRate}%)`;
   document.querySelector('[data-preview="taxAmount"]').textContent = formatMoney(taxAmount);
   document.querySelector('[data-preview="total"]').textContent = formatMoney(subtotal + taxAmount);
+  if (previewDialog.open) {
+    renderInvoiceDialogPreview();
+  }
+}
+
+function renderInvoiceDialogPreview() {
+  const previewCopy = invoicePreview.cloneNode(true);
+  previewCopy.removeAttribute("id");
+  previewCopy.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+  previewDialogContent.replaceChildren(previewCopy);
 }
 
 invoiceForm.addEventListener("input", updatePreview);
 invoiceForm.addEventListener("change", updatePreview);
+
+previewInvoiceButton.addEventListener("click", () => {
+  updatePreview();
+  renderInvoiceDialogPreview();
+  previewDialog.showModal();
+  previewInvoiceButton.setAttribute("aria-expanded", "true");
+  closePreviewButton.focus();
+});
+
+closePreviewButton.addEventListener("click", () => {
+  previewDialog.close();
+});
+
+previewDialog.addEventListener("close", () => {
+  previewInvoiceButton.setAttribute("aria-expanded", "false");
+});
+
+previewDialog.addEventListener("click", (event) => {
+  if (event.target === previewDialog) {
+    previewDialog.close();
+  }
+});
 
 businessInfoFieldNames.forEach((name) => {
   const field = invoiceForm.elements.namedItem(name);
@@ -290,6 +326,7 @@ downloadInvoiceButton.addEventListener("click", async () => {
   downloadInvoiceButton.textContent = "Preparing PDF...";
 
   try {
+    updatePreview();
     const canvas = await html2canvas(invoicePreview, {
       scale: 2,
       backgroundColor: "#ffffff",
