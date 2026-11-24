@@ -9,6 +9,10 @@ const receiptPreviewItems = document.getElementById("receipt-preview-items");
 const receiptSalesPreview = document.querySelector("[data-receipt-sales-preview]");
 const downloadReceiptButton = document.getElementById("download-receipt");
 const receiptPreview = document.getElementById("receipt-preview");
+const previewReceiptButton = document.getElementById("preview-receipt");
+const receiptPreviewDialog = document.getElementById("receipt-preview-dialog");
+const receiptDialogContent = document.getElementById("receipt-dialog-content");
+const closeReceiptPreviewButton = document.getElementById("close-receipt-preview");
 
 const receiptCopy = {
   payment: {
@@ -111,6 +115,17 @@ function updateReceiptPreview() {
 
   receiptPreviewItems.replaceChildren(...previewRows);
   receiptSalesPreview.hidden = selectedType !== "sales";
+
+  if (receiptPreviewDialog.open) {
+    renderReceiptDialogPreview();
+  }
+}
+
+function renderReceiptDialogPreview() {
+  const previewCopy = receiptPreview.cloneNode(true);
+  previewCopy.removeAttribute("id");
+  previewCopy.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+  receiptDialogContent.replaceChildren(previewCopy);
 }
 
 function updateReceiptType() {
@@ -150,6 +165,28 @@ receiptTypeInputs.forEach((input) => {
 
 receiptForm.addEventListener("input", updateReceiptPreview);
 receiptForm.addEventListener("change", updateReceiptPreview);
+
+previewReceiptButton.addEventListener("click", () => {
+  updateReceiptPreview();
+  renderReceiptDialogPreview();
+  receiptPreviewDialog.showModal();
+  previewReceiptButton.setAttribute("aria-expanded", "true");
+  closeReceiptPreviewButton.focus();
+});
+
+closeReceiptPreviewButton.addEventListener("click", () => {
+  receiptPreviewDialog.close();
+});
+
+receiptPreviewDialog.addEventListener("close", () => {
+  previewReceiptButton.setAttribute("aria-expanded", "false");
+});
+
+receiptPreviewDialog.addEventListener("click", (event) => {
+  if (event.target === receiptPreviewDialog) {
+    receiptPreviewDialog.close();
+  }
+});
 
 addSalesItemButton.addEventListener("click", () => {
   salesItemList.append(salesItemTemplate.content.cloneNode(true));
