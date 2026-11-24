@@ -8,7 +8,7 @@ const paymentForInput = document.getElementById("payment-for");
 const receiptPreviewItems = document.getElementById("receipt-preview-items");
 const receiptSalesPreview = document.querySelector("[data-receipt-sales-preview]");
 const downloadReceiptButton = document.getElementById("download-receipt");
-const shareReceiptButton = document.getElementById("share-receipt");
+const printReceiptButton = document.getElementById("print-receipt");
 const receiptPreview = document.getElementById("receipt-preview");
 const previewReceiptButton = document.getElementById("preview-receipt");
 const receiptPreviewDialog = document.getElementById("receipt-preview-dialog");
@@ -221,6 +221,16 @@ downloadReceiptButton.addEventListener("click", async () => {
   await prepareReceiptPdf(downloadReceiptButton, (pdf) => pdf.save(getReceiptPdfFilename()));
 });
 
+printReceiptButton.addEventListener("click", () => {
+  if (!receiptForm.checkValidity()) {
+    receiptForm.reportValidity();
+    return;
+  }
+
+  updateReceiptPreview();
+  window.print();
+});
+
 updateSalesItemRemoveButtons();
 updateReceiptType();
 
@@ -258,45 +268,10 @@ async function prepareReceiptPdf(button, operation) {
     const pdf = await createReceiptPdf();
     await operation(pdf);
   } catch (error) {
-    console.error("Could not create or share receipt PDF:", error);
-    alert("Could not create or share the PDF. Please try again.");
+    console.error("Could not create receipt PDF:", error);
+    alert("Could not create the PDF. Please try again.");
   } finally {
     button.disabled = false;
     button.innerHTML = originalContent;
   }
 }
-
-shareReceiptButton.addEventListener("click", async () => {
-  if (!receiptForm.checkValidity()) {
-    receiptForm.reportValidity();
-    return;
-  }
-  if (typeof html2canvas !== "function" || typeof jspdf !== "object") {
-    alert("PDF download libraries could not be loaded. Check your internet connection and try again.");
-    return;
-  }
-
-  await prepareReceiptPdf(shareReceiptButton, async (pdf) => {
-    if (typeof File !== "function" || typeof navigator.share !== "function"
-      || typeof navigator.canShare !== "function") {
-      pdf.save(getReceiptPdfFilename());
-      alert("File sharing isn't supported in this browser. The receipt PDF has been downloaded instead.");
-      return;
-    }
-
-    const file = new File([pdf.output("blob")], getReceiptPdfFilename(), { type: "application/pdf" });
-    if (!navigator.canShare({ files: [file] })) {
-      pdf.save(getReceiptPdfFilename());
-      alert("File sharing isn't supported in this browser. The receipt PDF has been downloaded instead.");
-      return;
-    }
-
-    try {
-      await navigator.share({ files: [file], title: "Receipt" });
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        throw error;
-      }
-    }
-  });
-});
