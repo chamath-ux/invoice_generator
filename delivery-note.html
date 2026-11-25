@@ -104,9 +104,10 @@
             <section class="form-section" aria-labelledby="signature-entry-heading">
               <h2 id="signature-entry-heading">Received signature</h2>
               <div class="field">
-                <label for="received-by-signature">Signature of person receiving the items (optional)</label>
-                <textarea id="received-by-signature" name="receivedBySignature" rows="3" maxlength="200" placeholder="Recipient signature"></textarea>
-                <p class="form-hint">Leave blank to sign the printed delivery note by hand.</p>
+                <span class="field-label">Signature of person receiving the items</span>
+                <canvas class="delivery-signature-pad" id="received-signature-pad" width="640" height="160" aria-label="Draw the recipient signature" aria-describedby="signature-help"></canvas>
+                <button class="text-button delivery-signature-clear" id="clear-signature" type="button">Clear signature</button>
+                <p class="form-hint" id="signature-help">Draw above using a mouse, touch, or stylus. Leave blank to sign the printed note by hand.</p>
               </div>
             </section>
 
@@ -180,7 +181,7 @@
                 </div>
                 <div>
                   <span class="preview-label">SIGNATURE OF RECEIVING PERSON</span>
-                  <p class="delivery-signature-text preview-preserve" data-preview="receivedBySignature"></p>
+                  <img class="delivery-signature-image" id="delivery-signature-preview" alt="Signature of receiving person" hidden>
                   <div class="delivery-signature-line" aria-hidden="true"></div>
                 </div>
                 <div>

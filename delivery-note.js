@@ -10,8 +10,14 @@ const downloadButton = document.getElementById("download-delivery-note");
 const previewDialog = document.getElementById("delivery-note-preview-dialog");
 const dialogContent = document.getElementById("delivery-note-dialog-content");
 const closePreviewButton = document.getElementById("close-delivery-note-preview");
+const signaturePad = document.getElementById("received-signature-pad");
+const clearSignatureButton = document.getElementById("clear-signature");
+const signaturePreviewImage = document.getElementById("delivery-signature-preview");
 const businessInfoStorageKey = "invoice-studio.business-info.v1";
 const businessInfoFieldNames = ["businessName", "businessEmail", "businessAddress"];
+let signatureContext;
+let signatureInProgress = false;
+let hasSignature = false;
 
 const previewFallbacks = {
   businessName: "Your business",
@@ -98,6 +104,55 @@ function removeSavedNonBusinessInfo() {
   }
 }
 
+function resizeSignaturePad() {
+  const bounds = signaturePad.getBoundingClientRect();
+  if (!bounds.width || !bounds.height) {
+    return;
+  }
+
+  const savedSignature = hasSignature ? signaturePad.toDataURL() : "";
+  const pixelRatio = window.devicePixelRatio || 1;
+  signaturePad.width = Math.round(bounds.width * pixelRatio);
+  signaturePad.height = Math.round(bounds.height * pixelRatio);
+  signatureContext = signaturePad.getContext("2d");
+  signatureContext.scale(pixelRatio, pixelRatio);
+  signatureContext.lineWidth = 2.5;
+  signatureContext.lineCap = "round";
+  signatureContext.lineJoin = "round";
+  signatureContext.strokeStyle = "#172033";
+
+  if (savedSignature) {
+    const savedImage = new Image();
+    savedImage.addEventListener("load", () => {
+      signatureContext.drawImage(savedImage, 0, 0, bounds.width, bounds.height);
+      updateSignaturePreview();
+    }, { once: true });
+    savedImage.src = savedSignature;
+  }
+}
+
+function getSignaturePoint(event) {
+  const bounds = signaturePad.getBoundingClientRect();
+  return {
+    x: event.clientX - bounds.left,
+    y: event.clientY - bounds.top,
+  };
+}
+
+function updateSignaturePreview() {
+  if (!hasSignature) {
+    signaturePreviewImage.removeAttribute("src");
+    signaturePreviewImage.hidden = true;
+  } else {
+    signaturePreviewImage.src = signaturePad.toDataURL("image/png");
+    signaturePreviewImage.hidden = false;
+  }
+
+  if (previewDialog.open) {
+    renderDialogPreview();
+  }
+}
+
 function restoreBusinessInfo() {
   const businessInfo = getStoredBusinessInfo();
   businessInfoFieldNames.forEach((name) => {
@@ -141,7 +196,6 @@ function updatePreview() {
   setPreviewValue("deliveryDate", formatDate(getFieldValue("deliveryDate")));
   setPreviewValue("orderReference", getFieldValue("orderReference"));
   setPreviewValue("notes", getFieldValue("notes"));
-  setPreviewValue("receivedBySignature", getFieldValue("receivedBySignature"));
 
   const rows = Array.from(deliveryNoteItems.querySelectorAll("[data-item-row]"));
   const previewRows = rows.map((row) => {
@@ -183,6 +237,9 @@ function updateItemRemoveButtons() {
 
 async function createPdf() {
   updatePreview();
+  if (hasSignature) {
+    await signaturePreviewImage.decode();
+  }
   const canvas = await html2canvas(preview, {
     scale: 2,
     backgroundColor: "#ffffff",
@@ -206,6 +263,47 @@ function getPdfFilename() {
 
 deliveryNoteForm.addEventListener("input", updatePreview);
 deliveryNoteForm.addEventListener("change", updatePreview);
+
+signaturePad.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  signaturePad.setPointerCapture(event.pointerId);
+  signatureInProgress = true;
+  hasSignature = true;
+  const point = getSignaturePoint(event);
+  signatureContext.beginPath();
+  signatureContext.moveTo(point.x, point.y);
+  signatureContext.lineTo(point.x + 0.1, point.y + 0.1);
+  signatureContext.stroke();
+});
+
+signaturePad.addEventListener("pointermove", (event) => {
+  if (!signatureInProgress) {
+    return;
+  }
+  const point = getSignaturePoint(event);
+  signatureContext.lineTo(point.x, point.y);
+  signatureContext.stroke();
+});
+
+function finishSignature() {
+  if (signatureInProgress) {
+    signatureInProgress = false;
+    updateSignaturePreview();
+  }
+}
+
+signaturePad.addEventListener("pointerup", finishSignature);
+signaturePad.addEventListener("pointercancel", finishSignature);
+signaturePad.addEventListener("lostpointercapture", finishSignature);
+
+clearSignatureButton.addEventListener("click", () => {
+  const bounds = signaturePad.getBoundingClientRect();
+  signatureContext.clearRect(0, 0, bounds.width, bounds.height);
+  hasSignature = false;
+  updateSignaturePreview();
+});
+
+window.addEventListener("resize", resizeSignaturePad);
 
 businessInfoFieldNames.forEach((name) => {
   const field = deliveryNoteForm.elements.namedItem(name);
@@ -283,5 +381,6 @@ downloadButton.addEventListener("click", async () => {
 removeSavedDocumentDrafts();
 removeSavedNonBusinessInfo();
 restoreBusinessInfo();
+resizeSignaturePad();
 updateItemRemoveButtons();
 updatePreview();
