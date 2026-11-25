@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f6f7fb">
     <title>GetBizKit</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="header.js" defer></script>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <script src="assets/js/header.js" defer></script>
+    <script src="assets/js/dashboard.js" defer></script>
   </head>
   <body>
     <div class="page dashboard-page">
@@ -26,15 +27,26 @@
         </section>
 
         <section class="tools-section" aria-labelledby="tools-heading">
-          <!-- <div class="tools-heading-row">
+          <div class="tools-heading-row">
             <div>
-              <h2 id="tools-heading">Your tools</h2>
-              <p>Billing and payment documents</p>
+              <h2 id="tools-heading">Business documents</h2>
+              <p>All your essential business document tools in one place.</p>
             </div>
-          </div> -->
+            <div class="category-filter">
+              <label for="tool-category-filter">Filter by category</label>
+              <select id="tool-category-filter" aria-controls="tool-grid">
+                <option value="all">All categories</option>
+                <option value="billing">Billing &amp; Payments</option>
+                <option value="orders">Order Fulfillment</option>
+                <option value="procurement">Procurement</option>
+                <option value="estimates">Estimates</option>
+              </select>
+              <span class="visually-hidden" id="tool-filter-status" aria-live="polite" aria-atomic="true"></span>
+            </div>
+          </div>
 
-          <div class="options tool-grid">
-            <article class="option-card tool-card">
+          <div class="options tool-grid" id="tool-grid">
+            <article class="option-card tool-card" data-category="billing">
               <div class="tool-card-top">
                 <span class="icon-wrap" aria-hidden="true">
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
@@ -42,11 +54,11 @@
                     <path d="M14 4v4h4M8.5 12h7M8.5 15.5h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </span>
-                <span class="tool-category">GET PAID</span>
+                <span class="tool-category">BILLING &amp; PAYMENTS</span>
               </div>
               <h3>Invoice</h3>
               <p>Create a professional invoice with line items, tax, and a live preview.</p>
-              <a class="card-action" href="invoice.html">
+              <a class="card-action" href="pages/invoice.html">
                 get started
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                   <path d="M4.5 10h11m-4.5-4.5L15.5 10 11 14.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -54,7 +66,7 @@
               </a>
             </article>
 
-            <article class="option-card tool-card">
+            <article class="option-card tool-card" data-category="orders">
               <div class="tool-card-top">
                 <span class="icon-wrap" aria-hidden="true">
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
@@ -62,11 +74,11 @@
                     <path d="M14 4v4h4M8.5 12h7M8.5 15.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </span>
-                <span class="tool-category">FULFILL ORDERS</span>
+                <span class="tool-category">ORDER FULFILLMENT</span>
               </div>
               <h3>Sales Order</h3>
               <p>Confirm a customer order with item details, delivery date, and totals.</p>
-              <a class="card-action" href="sales-order.html">
+              <a class="card-action" href="pages/sales-order.html">
                 get started
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                   <path d="M4.5 10h11m-4.5-4.5L15.5 10 11 14.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -74,7 +86,7 @@
               </a>
             </article>
 
-            <article class="option-card tool-card">
+            <article class="option-card tool-card" data-category="orders">
               <div class="tool-card-top">
                 <span class="icon-wrap" aria-hidden="true">
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
@@ -83,11 +95,11 @@
                     <circle cx="18" cy="18" r="1.5" stroke="currentColor" stroke-width="1.5"/>
                   </svg>
                 </span>
-                <span class="tool-category">DELIVERY</span>
+                <span class="tool-category">ORDER FULFILLMENT</span>
               </div>
               <h3>Delivery Note</h3>
               <p>List delivered items and capture the recipient’s signature.</p>
-              <a class="card-action" href="delivery-note.html">
+              <a class="card-action" href="pages/delivery-note.html">
                 get started
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                   <path d="M4.5 10h11m-4.5-4.5L15.5 10 11 14.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -95,7 +107,7 @@
               </a>
             </article>
 
-            <article class="option-card tool-card">
+            <article class="option-card tool-card" data-category="procurement">
               <div class="tool-card-top">
                 <span class="icon-wrap" aria-hidden="true">
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
@@ -104,11 +116,11 @@
                     <circle cx="17.5" cy="20" r="1" fill="currentColor"/>
                   </svg>
                 </span>
-                <span class="tool-category">BUYING</span>
+                <span class="tool-category">PROCUREMENT</span>
               </div>
               <h3>Purchase Order</h3>
               <p>Prepare a supplier order with requested delivery dates and item totals.</p>
-              <a class="card-action" href="purchase-order.html">
+              <a class="card-action" href="pages/purchase-order.html">
                 get started
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                   <path d="M4.5 10h11m-4.5-4.5L15.5 10 11 14.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -116,7 +128,7 @@
               </a>
             </article>
 
-            <article class="option-card tool-card">
+            <article class="option-card tool-card" data-category="estimates">
               <div class="tool-card-top">
                 <span class="icon-wrap" aria-hidden="true">
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
@@ -124,11 +136,11 @@
                     <path d="M14 4v4h4M8.5 12h7M8.5 15.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </span>
-                <span class="tool-category">ESTIMATE WORK</span>
+                <span class="tool-category">ESTIMATES</span>
               </div>
               <h3>Quotation</h3>
               <p>Prepare a clear price estimate with line items, tax, and a validity date.</p>
-              <a class="card-action" href="quotation.html">
+              <a class="card-action" href="pages/quotation.html">
                 get started
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                   <path d="M4.5 10h11m-4.5-4.5L15.5 10 11 14.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -136,7 +148,7 @@
               </a>
             </article>
 
-            <article class="option-card tool-card">
+            <article class="option-card tool-card" data-category="billing">
               <div class="tool-card-top">
                 <span class="icon-wrap" aria-hidden="true">
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
@@ -144,11 +156,11 @@
                     <path d="M4.5 10h15M8 14h3M15.5 14h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
                   </svg>
                 </span>
-                <span class="tool-category">RECORD PAYMENTS</span>
+                <span class="tool-category">BILLING &amp; PAYMENTS</span>
               </div>
               <h3>Receipt</h3>
               <p>Confirm a payment with a clear receipt for your customer.</p>
-              <a class="card-action" href="receipt.html">
+              <a class="card-action" href="pages/receipt.html">
                 get started
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                   <path d="M4.5 10h11m-4.5-4.5L15.5 10 11 14.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
