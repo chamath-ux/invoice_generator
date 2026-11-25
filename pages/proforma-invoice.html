@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f7fb">
+    <title>Create a Proforma Invoice | GetBizKit</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <script src="../assets/js/header.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  </head>
+  <body data-document-label="pro forma invoice">
+    <div class="page form-page invoice-workspace-page">
+      <div data-site-header></div>
+
+      <main>
+        <a class="back-link" href="../index.html">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M15.5 10h-11m4.5 4.5L4.5 10 9 5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back to tools
+        </a>
+
+        <section class="form-intro" aria-labelledby="page-title">
+          <p class="eyebrow">Billing &amp; payments</p>
+          <h1 id="page-title">Create a proforma invoice</h1>
+          <p class="intro-copy">Prepare a preliminary invoice for estimated goods or services before a sale is finalized.</p>
+        </section>
+
+        <div class="invoice-workspace">
+          <form class="details-form invoice-form" id="invoice-form">
+            <section class="form-section" aria-labelledby="business-heading">
+              <h2 id="business-heading">Your business</h2>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="business-name">Business name</label>
+                  <input id="business-name" name="businessName" autocomplete="organization" placeholder="Your business name">
+                </div>
+                <div class="field">
+                  <label for="business-email">Email address</label>
+                  <input id="business-email" name="businessEmail" type="email" autocomplete="email" placeholder="you@example.com">
+                </div>
+                <div class="field field--wide">
+                  <label for="business-address">Business address</label>
+                  <textarea id="business-address" name="businessAddress" autocomplete="street-address" placeholder="Street, city, postal code"></textarea>
+                </div>
+                <div class="field field--wide">
+                  <label for="business-logo">Shop logo (optional)</label>
+                  <div class="logo-control-row">
+                    <input class="logo-input" id="business-logo" type="file" accept="image/png,image/jpeg,image/webp">
+                    <button class="text-button" id="remove-business-logo" type="button" disabled>Remove logo</button>
+                  </div>
+                  <p class="form-hint" id="business-logo-status" aria-live="polite">PNG, JPEG, or WebP, up to 1 MB.</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="customer-heading">
+              <h2 id="customer-heading">Prepared for</h2>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="customer-name">Customer name</label>
+                  <input id="customer-name" name="customerName" autocomplete="name" placeholder="Customer or company name">
+                </div>
+                <div class="field">
+                  <label for="customer-email">Customer email</label>
+                  <input id="customer-email" name="customerEmail" type="email" autocomplete="email" placeholder="customer@example.com">
+                </div>
+                <div class="field field--wide">
+                  <label for="customer-address">Customer address</label>
+                  <textarea id="customer-address" name="customerAddress" placeholder="Street, city, postal code"></textarea>
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="proforma-heading">
+              <h2 id="proforma-heading">Proforma information</h2>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="invoice-number">Proforma number</label>
+                  <input id="invoice-number" name="invoiceNumber" placeholder="e.g. PI-1001">
+                </div>
+                <div class="field">
+                  <label for="currency">Currency</label>
+                  <select id="currency" name="currency">
+                    <option value="USD">USD — US Dollar</option>
+                    <option value="EUR">EUR — Euro</option>
+                    <option value="GBP">GBP — British Pound</option>
+                    <option value="INR">INR — Indian Rupee</option>
+                    <option value="LKR">LKR — Sri Lankan Rupee</option>
+                    <option value="CAD">CAD — Canadian Dollar</option>
+                    <option value="AUD">AUD — Australian Dollar</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="invoice-date">Issue date</label>
+                  <input id="invoice-date" name="invoiceDate" type="date">
+                </div>
+                <div class="field">
+                  <label for="due-date">Valid until</label>
+                  <input id="due-date" name="dueDate" type="date">
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="items-heading">
+              <div class="section-heading-row">
+                <h2 id="items-heading">Estimated items</h2>
+                <button class="text-button" id="add-item" type="button">+ Add item</button>
+              </div>
+              <div class="item-list" id="invoice-items">
+                <div class="item-row" data-item-row>
+                  <div class="field item-description">
+                    <label for="item-description-1">Description</label>
+                    <input id="item-description-1" data-item-description placeholder="Product or service">
+                  </div>
+                  <div class="field item-quantity">
+                    <label for="item-quantity-1">Qty</label>
+                    <input id="item-quantity-1" data-item-quantity type="number" min="0" step="any" value="1" inputmode="decimal">
+                  </div>
+                  <div class="field item-price">
+                    <label for="item-price-1">Unit price</label>
+                    <input id="item-price-1" data-item-price type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal">
+                  </div>
+                  <button class="icon-button item-remove" type="button" aria-label="Remove item" title="Remove item">
+                    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                      <path d="M5 6h10m-9 0 .6 9h6.8L14 6m-5.5 0V4.5h3V6m-2.5 2.5v4m3-4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="extra-heading">
+              <h2 id="extra-heading">Tax and terms</h2>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="tax-rate">Estimated tax rate (%)</label>
+                  <input id="tax-rate" name="taxRate" type="number" min="0" max="100" step="0.01" placeholder="0">
+                </div>
+                <div class="field field--wide">
+                  <label for="invoice-notes">Payment terms or notes (optional)</label>
+                  <textarea id="invoice-notes" name="notes" placeholder="Estimated delivery, payment terms, or other notes"></textarea>
+                </div>
+              </div>
+            </section>
+            <p class="form-hint form-live-hint">The preview updates as you enter details.</p>
+          </form>
+
+          <div class="invoice-actions">
+            <button class="secondary-button" id="preview-invoice" type="button" aria-expanded="false" aria-controls="invoice-preview-dialog">
+              Preview proforma invoice
+            </button>
+            <button class="secondary-button" id="print-invoice" type="button">Print proforma invoice</button>
+            <button class="primary-button preview-download-button" id="download-invoice" type="button">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4.5 15.5h11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Download as PDF
+            </button>
+          </div>
+
+          <div class="invoice-preview-source" aria-hidden="true">
+            <div class="invoice-preview" id="invoice-preview">
+              <div class="preview-topline">
+                <span>PRO FORMA INVOICE</span>
+                <img class="preview-logo" id="invoice-logo-preview" alt="Business logo" hidden>
+                <span class="preview-mark" aria-hidden="true">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 3.75h7l4 4v12.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                    <path d="M14 4v4h4M8.5 12h7M8.5 15.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+
+              <h2 class="preview-business" data-preview="businessName">Your business</h2>
+              <p class="preview-muted preview-preserve" data-preview="businessAddress">Business address</p>
+              <p class="preview-muted" data-preview="businessEmail">Business email</p>
+
+              <div class="preview-rule"></div>
+              <div class="preview-meta">
+                <div>
+                  <span class="preview-label">PREPARED FOR</span>
+                  <p class="preview-strong" data-preview="customerName">Customer name</p>
+                  <p class="preview-muted preview-preserve" data-preview="customerAddress"></p>
+                  <p class="preview-muted" data-preview="customerEmail"></p>
+                </div>
+                <div class="preview-invoice-meta">
+                  <span class="preview-label">PROFORMA NO.</span>
+                  <p class="preview-strong" data-preview="invoiceNumber">—</p>
+                  <span class="preview-label">ISSUED</span>
+                  <p class="preview-muted" data-preview="invoiceDate">—</p>
+                  <span class="preview-label">VALID UNTIL</span>
+                  <p class="preview-muted" data-preview="dueDate">—</p>
+                </div>
+              </div>
+
+              <div class="preview-table-wrap">
+                <table class="preview-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Item</th>
+                      <th scope="col">Qty</th>
+                      <th scope="col">Estimated amount</th>
+                    </tr>
+                  </thead>
+                  <tbody id="preview-items">
+                    <tr>
+                      <td>Item description</td>
+                      <td>1</td>
+                      <td>$0.00</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="preview-totals">
+                <div><span>Estimated subtotal</span><strong data-preview="subtotal">$0.00</strong></div>
+                <div><span>Estimated tax <span data-preview="taxRateLabel">(0%)</span></span><strong data-preview="taxAmount">$0.00</strong></div>
+                <div class="preview-grand-total"><span>Estimated total</span><strong data-preview="total">$0.00</strong></div>
+              </div>
+
+              <div class="preview-notes-wrap">
+                <span class="preview-label">TERMS / NOTES</span>
+                <p class="preview-muted preview-preserve" data-preview="notes">Estimated delivery, payment terms, or other notes</p>
+              </div>
+              <div class="preview-notes-wrap">
+                <span class="preview-label">PRO FORMA NOTICE</span>
+                <p class="preview-muted">Preliminary estimate only. This document is not a tax invoice or proof of payment.</p>
+              </div>
+            </div>
+          </div>
+
+          <dialog class="invoice-preview-dialog" id="invoice-preview-dialog" aria-labelledby="invoice-preview-title">
+            <div class="invoice-dialog-header">
+              <h2 id="invoice-preview-title">Proforma invoice preview</h2>
+              <button class="icon-button" id="close-invoice-preview" type="button" aria-label="Close preview">
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <div class="invoice-dialog-content" id="invoice-dialog-content"></div>
+          </dialog>
+        </div>
+      </main>
+    </div>
+
+    <template id="item-template">
+      <div class="item-row" data-item-row>
+        <div class="field item-description">
+          <label>Description
+            <input data-item-description placeholder="Product or service">
+          </label>
+        </div>
+        <div class="field item-quantity">
+          <label>Qty
+            <input data-item-quantity type="number" min="0" step="any" value="1" inputmode="decimal">
+          </label>
+        </div>
+        <div class="field item-price">
+          <label>Unit price
+            <input data-item-price type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal">
+          </label>
+        </div>
+        <button class="icon-button item-remove" type="button" aria-label="Remove item" title="Remove item">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M5 6h10m-9 0 .6 9h6.8L14 6m-5.5 0V4.5h3V6m-2.5 2.5v4m3-4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </template>
+    <script src="../assets/js/invoice.js" defer></script>
+  </body>
+</html>

@@ -21,6 +21,7 @@ const businessInfoFieldNames = ["businessName", "businessEmail", "businessAddres
 const maxBusinessLogoBytes = 1024 * 1024;
 const maxBusinessLogoDataUrlLength = Math.ceil(maxBusinessLogoBytes / 3) * 4 + 100;
 const supportedBusinessLogoTypes = ["image/png", "image/jpeg", "image/webp"];
+const invoiceDocumentLabel = document.body.dataset.documentLabel || "invoice";
 let businessLogoDataUrl = "";
 
 const previewFields = {
@@ -413,7 +414,8 @@ async function createInvoicePdf() {
 
 function getInvoicePdfFilename() {
   const invoiceNumber = invoiceForm.elements.namedItem("invoiceNumber").value.trim();
-  return `${invoiceNumber || "invoice"}.pdf`;
+  const fallbackName = invoiceDocumentLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return `${invoiceNumber || fallbackName}.pdf`;
 }
 
 async function prepareInvoicePdf(button, operation) {
@@ -425,8 +427,8 @@ async function prepareInvoicePdf(button, operation) {
     const pdf = await createInvoicePdf();
     await operation(pdf);
   } catch (error) {
-    console.error("Could not create invoice PDF:", error);
-    alert("Could not create the PDF. Please try again.");
+    console.error(`Could not create ${invoiceDocumentLabel} PDF:`, error);
+    alert(`Could not create the ${invoiceDocumentLabel} PDF. Please try again.`);
   } finally {
     button.disabled = false;
     button.innerHTML = originalContent;
