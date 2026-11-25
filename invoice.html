@@ -6,23 +6,13 @@
     <meta name="theme-color" content="#f6f7fb">
     <title>Create an Invoice | Invoice Studio</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="header.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   </head>
   <body>
     <div class="page form-page invoice-workspace-page">
-      <header class="topbar">
-        <a class="brand" href="index.html" aria-label="Invoice Studio home">
-          <span class="brand-mark" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M7 3.75h7l4 4v12.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-              <path d="M14 4v4h4M8.5 12h7M8.5 15.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </span>
-          Invoice Studio
-        </a>
-        <span class="topbar-note">Simple billing, all in one place</span>
-      </header>
+      <div data-site-header></div>
 
       <main>
         <a class="back-link" href="index.html">
@@ -276,6 +266,6 @@
         </button>
       </div>
     </template>
-    <script type="module" src="invoice.js"></script>
+    <script src="invoice.js" defer></script>
   </body>
 </html>
