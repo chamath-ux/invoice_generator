@@ -18,8 +18,6 @@ const invoiceLogoPreview = document.getElementById("invoice-logo-preview");
 const defaultPreviewMark = document.querySelector(".preview-mark");
 const businessInfoStorageKey = "invoice-studio.business-info.v1";
 const businessInfoFieldNames = ["businessName", "businessEmail", "businessAddress"];
-const invoiceDraftStorageKey = "invoice-studio.invoice-draft.v1";
-const sharedBusinessInfoFieldNames = new Set(businessInfoFieldNames);
 const maxBusinessLogoBytes = 1024 * 1024;
 const maxBusinessLogoDataUrlLength = Math.ceil(maxBusinessLogoBytes / 3) * 4 + 100;
 const supportedBusinessLogoTypes = ["image/png", "image/jpeg", "image/webp"];
@@ -122,11 +120,10 @@ function getStoredBusinessInfo() {
 }
 
 function saveBusinessInfo() {
-  const businessInfo = getStoredBusinessInfo();
+  const businessInfo = { logoDataUrl: businessLogoDataUrl };
   businessInfoFieldNames.forEach((name) => {
     businessInfo[name] = invoiceForm.elements.namedItem(name).value;
   });
-  businessInfo.logoDataUrl = businessLogoDataUrl;
 
   try {
     localStorage.setItem(businessInfoStorageKey, JSON.stringify(businessInfo));
@@ -134,6 +131,40 @@ function saveBusinessInfo() {
   } catch (error) {
     console.error("Could not save business information:", error);
     return false;
+  }
+}
+
+function removeSavedDocumentDrafts() {
+  try {
+    [
+      "invoice-studio.invoice-draft.v1",
+      "invoice-studio.quotation-draft.v1",
+      "invoice-studio.receipt-draft.v1",
+      "invoice-studio.purchase-order-draft.v1",
+    ].forEach((key) => localStorage.removeItem(key));
+  } catch (error) {
+    console.error("Could not remove saved document details:", error);
+  }
+}
+
+function removeSavedNonBusinessInfo() {
+  const storedBusinessInfo = getStoredBusinessInfo();
+  const businessInfo = {};
+  businessInfoFieldNames.forEach((name) => {
+    if (typeof storedBusinessInfo[name] === "string") {
+      businessInfo[name] = storedBusinessInfo[name];
+    }
+  });
+  if (typeof storedBusinessInfo.logoDataUrl === "string") {
+    businessInfo.logoDataUrl = storedBusinessInfo.logoDataUrl;
+  }
+
+  if (Object.keys(storedBusinessInfo).length !== Object.keys(businessInfo).length) {
+    try {
+      localStorage.setItem(businessInfoStorageKey, JSON.stringify(businessInfo));
+    } catch (error) {
+      console.error("Could not remove saved non-business details:", error);
+    }
   }
 }
 
@@ -146,76 +177,6 @@ function restoreBusinessInfo() {
     }
   });
   return businessInfo;
-}
-
-function getInvoiceDraft() {
-  const fields = {};
-  Array.from(invoiceForm.elements).forEach((field) => {
-    if (field.name && field.type !== "file" && !sharedBusinessInfoFieldNames.has(field.name)) {
-      fields[field.name] = field.value;
-    }
-  });
-
-  const items = Array.from(invoiceItems.querySelectorAll("[data-item-row]")).map((row) => ({
-    description: row.querySelector("[data-item-description]").value,
-    quantity: row.querySelector("[data-item-quantity]").value,
-    price: row.querySelector("[data-item-price]").value,
-  }));
-  return { fields, items };
-}
-
-function saveInvoiceDraft() {
-  try {
-    localStorage.setItem(invoiceDraftStorageKey, JSON.stringify(getInvoiceDraft()));
-    return true;
-  } catch (error) {
-    console.error("Could not save invoice information:", error);
-    return false;
-  }
-}
-
-function restoreInvoiceDraft() {
-  let draft;
-  try {
-    const storedDraft = localStorage.getItem(invoiceDraftStorageKey);
-    if (!storedDraft) {
-      return;
-    }
-    draft = JSON.parse(storedDraft);
-  } catch (error) {
-    console.error("Could not read saved invoice information:", error);
-    return;
-  }
-
-  if (!draft || typeof draft !== "object" || Array.isArray(draft)
-    || !draft.fields || typeof draft.fields !== "object" || Array.isArray(draft.fields)
-    || !Array.isArray(draft.items)) {
-    console.error("Saved invoice information has an invalid format.");
-    return;
-  }
-
-  Object.entries(draft.fields).forEach(([name, value]) => {
-    const field = invoiceForm.elements.namedItem(name);
-    if (field && typeof value === "string" && !sharedBusinessInfoFieldNames.has(name)) {
-      field.value = value;
-    }
-  });
-
-  const items = draft.items.filter((item) => item && typeof item === "object"
-    && typeof item.description === "string"
-    && typeof item.quantity === "string"
-    && typeof item.price === "string");
-  if (items.length) {
-    invoiceItems.replaceChildren();
-    items.forEach((item) => {
-      const newRow = itemTemplate.content.cloneNode(true);
-      const row = newRow.querySelector("[data-item-row]");
-      row.querySelector("[data-item-description]").value = item.description;
-      row.querySelector("[data-item-quantity]").value = item.quantity;
-      row.querySelector("[data-item-price]").value = item.price;
-      invoiceItems.append(newRow);
-    });
-  }
 }
 
 async function restoreBusinessLogo(dataUrl) {
@@ -301,14 +262,8 @@ function renderInvoiceDialogPreview() {
   previewDialogContent.replaceChildren(previewCopy);
 }
 
-invoiceForm.addEventListener("input", () => {
-  updatePreview();
-  saveInvoiceDraft();
-});
-invoiceForm.addEventListener("change", () => {
-  updatePreview();
-  saveInvoiceDraft();
-});
+invoiceForm.addEventListener("input", updatePreview);
+invoiceForm.addEventListener("change", updatePreview);
 
 previewInvoiceButton.addEventListener("click", () => {
   updatePreview();
@@ -392,7 +347,6 @@ addItemButton.addEventListener("click", () => {
   invoiceItems.append(newRow);
   updateItemRemoveButtons();
   updatePreview();
-  saveInvoiceDraft();
   invoiceItems.querySelector("[data-item-row]:last-child [data-item-description]").focus();
 });
 
@@ -429,11 +383,11 @@ invoiceItems.addEventListener("click", (event) => {
   removeButton.closest("[data-item-row]").remove();
   updateItemRemoveButtons();
   updatePreview();
-  saveInvoiceDraft();
 });
 
+removeSavedDocumentDrafts();
+removeSavedNonBusinessInfo();
 restoreBusinessLogo(restoreBusinessInfo().logoDataUrl);
-restoreInvoiceDraft();
 updateItemRemoveButtons();
 updatePreview();
 
