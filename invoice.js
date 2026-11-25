@@ -18,6 +18,8 @@ const invoiceLogoPreview = document.getElementById("invoice-logo-preview");
 const defaultPreviewMark = document.querySelector(".preview-mark");
 const businessInfoStorageKey = "invoice-studio.business-info.v1";
 const businessInfoFieldNames = ["businessName", "businessEmail", "businessAddress"];
+const invoiceDraftStorageKey = "invoice-studio.invoice-draft.v1";
+const sharedBusinessInfoFieldNames = new Set(businessInfoFieldNames);
 const maxBusinessLogoBytes = 1024 * 1024;
 const maxBusinessLogoDataUrlLength = Math.ceil(maxBusinessLogoBytes / 3) * 4 + 100;
 const supportedBusinessLogoTypes = ["image/png", "image/jpeg", "image/webp"];
@@ -100,8 +102,27 @@ async function displayBusinessLogo(dataUrl) {
   removeBusinessLogoButton.disabled = false;
 }
 
+function getStoredBusinessInfo() {
+  try {
+    const storedBusinessInfo = localStorage.getItem(businessInfoStorageKey);
+    if (!storedBusinessInfo) {
+      return {};
+    }
+
+    const businessInfo = JSON.parse(storedBusinessInfo);
+    if (!businessInfo || typeof businessInfo !== "object" || Array.isArray(businessInfo)) {
+      console.error("Saved business information has an invalid format.");
+      return {};
+    }
+    return businessInfo;
+  } catch (error) {
+    console.error("Could not read saved business information:", error);
+    return {};
+  }
+}
+
 function saveBusinessInfo() {
-  const businessInfo = {};
+  const businessInfo = getStoredBusinessInfo();
   businessInfoFieldNames.forEach((name) => {
     businessInfo[name] = invoiceForm.elements.namedItem(name).value;
   });
@@ -116,41 +137,98 @@ function saveBusinessInfo() {
   }
 }
 
-async function restoreBusinessInfo() {
-  let businessInfo;
-
-  try {
-    const storedBusinessInfo = localStorage.getItem(businessInfoStorageKey);
-    if (!storedBusinessInfo) {
-      return;
-    }
-    businessInfo = JSON.parse(storedBusinessInfo);
-  } catch (error) {
-    console.error("Could not read saved business information:", error);
-    return;
-  }
-
-  if (!businessInfo || typeof businessInfo !== "object" || Array.isArray(businessInfo)) {
-    console.error("Saved business information has an invalid format.");
-    return;
-  }
-
+function restoreBusinessInfo() {
+  const businessInfo = getStoredBusinessInfo();
   businessInfoFieldNames.forEach((name) => {
+    const field = invoiceForm.elements.namedItem(name);
     if (typeof businessInfo[name] === "string") {
-      invoiceForm.elements.namedItem(name).value = businessInfo[name];
+      field.value = businessInfo[name];
+    }
+  });
+  return businessInfo;
+}
+
+function getInvoiceDraft() {
+  const fields = {};
+  Array.from(invoiceForm.elements).forEach((field) => {
+    if (field.name && field.type !== "file" && !sharedBusinessInfoFieldNames.has(field.name)) {
+      fields[field.name] = field.value;
     }
   });
 
-  if (typeof businessInfo.logoDataUrl === "string" && businessInfo.logoDataUrl) {
-    const isSupportedLogo = /^data:image\/(?:png|jpeg|webp);base64,/i.test(businessInfo.logoDataUrl);
-    if (!isSupportedLogo || businessInfo.logoDataUrl.length > maxBusinessLogoDataUrlLength) {
+  const items = Array.from(invoiceItems.querySelectorAll("[data-item-row]")).map((row) => ({
+    description: row.querySelector("[data-item-description]").value,
+    quantity: row.querySelector("[data-item-quantity]").value,
+    price: row.querySelector("[data-item-price]").value,
+  }));
+  return { fields, items };
+}
+
+function saveInvoiceDraft() {
+  try {
+    localStorage.setItem(invoiceDraftStorageKey, JSON.stringify(getInvoiceDraft()));
+    return true;
+  } catch (error) {
+    console.error("Could not save invoice information:", error);
+    return false;
+  }
+}
+
+function restoreInvoiceDraft() {
+  let draft;
+  try {
+    const storedDraft = localStorage.getItem(invoiceDraftStorageKey);
+    if (!storedDraft) {
+      return;
+    }
+    draft = JSON.parse(storedDraft);
+  } catch (error) {
+    console.error("Could not read saved invoice information:", error);
+    return;
+  }
+
+  if (!draft || typeof draft !== "object" || Array.isArray(draft)
+    || !draft.fields || typeof draft.fields !== "object" || Array.isArray(draft.fields)
+    || !Array.isArray(draft.items)) {
+    console.error("Saved invoice information has an invalid format.");
+    return;
+  }
+
+  Object.entries(draft.fields).forEach(([name, value]) => {
+    const field = invoiceForm.elements.namedItem(name);
+    if (field && typeof value === "string" && !sharedBusinessInfoFieldNames.has(name)) {
+      field.value = value;
+    }
+  });
+
+  const items = draft.items.filter((item) => item && typeof item === "object"
+    && typeof item.description === "string"
+    && typeof item.quantity === "string"
+    && typeof item.price === "string");
+  if (items.length) {
+    invoiceItems.replaceChildren();
+    items.forEach((item, index) => {
+      const newRow = itemTemplate.content.cloneNode(true);
+      const row = newRow.querySelector("[data-item-row]");
+      row.querySelector("[data-item-description]").value = item.description;
+      row.querySelector("[data-item-quantity]").value = item.quantity;
+      row.querySelector("[data-item-price]").value = item.price;
+      invoiceItems.append(newRow);
+    });
+  }
+}
+
+async function restoreBusinessLogo(dataUrl) {
+  if (typeof dataUrl === "string" && dataUrl) {
+    const isSupportedLogo = /^data:image\/(?:png|jpeg|webp);base64,/i.test(dataUrl);
+    if (!isSupportedLogo || dataUrl.length > maxBusinessLogoDataUrlLength) {
       console.error("Saved shop logo has an invalid format or exceeds the size limit.");
       businessLogoStatus.textContent = "The saved logo could not be restored. Choose an image up to 1 MB.";
       return;
     }
 
     try {
-      await displayBusinessLogo(businessInfo.logoDataUrl);
+      await displayBusinessLogo(dataUrl);
       businessLogoStatus.textContent = "Saved shop logo restored.";
     } catch (error) {
       console.error("Could not restore saved shop logo:", error);
@@ -223,8 +301,14 @@ function renderInvoiceDialogPreview() {
   previewDialogContent.replaceChildren(previewCopy);
 }
 
-invoiceForm.addEventListener("input", updatePreview);
-invoiceForm.addEventListener("change", updatePreview);
+invoiceForm.addEventListener("input", () => {
+  updatePreview();
+  saveInvoiceDraft();
+});
+invoiceForm.addEventListener("change", () => {
+  updatePreview();
+  saveInvoiceDraft();
+});
 
 previewInvoiceButton.addEventListener("click", () => {
   updatePreview();
@@ -308,6 +392,7 @@ addItemButton.addEventListener("click", () => {
   invoiceItems.append(newRow);
   updateItemRemoveButtons();
   updatePreview();
+  saveInvoiceDraft();
   invoiceItems.querySelector("[data-item-row]:last-child [data-item-description]").focus();
 });
 
@@ -344,9 +429,11 @@ invoiceItems.addEventListener("click", (event) => {
   removeButton.closest("[data-item-row]").remove();
   updateItemRemoveButtons();
   updatePreview();
+  saveInvoiceDraft();
 });
 
-restoreBusinessInfo();
+restoreBusinessLogo(restoreBusinessInfo().logoDataUrl);
+restoreInvoiceDraft();
 updateItemRemoveButtons();
 updatePreview();
 

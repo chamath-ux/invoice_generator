@@ -237,6 +237,7 @@ h1 {
 }
 
 .tool-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   max-width: none;
   gap: 18px;
 }
