@@ -14,6 +14,8 @@ const previewReceiptButton = document.getElementById("preview-receipt");
 const receiptPreviewDialog = document.getElementById("receipt-preview-dialog");
 const receiptDialogContent = document.getElementById("receipt-dialog-content");
 const closeReceiptPreviewButton = document.getElementById("close-receipt-preview");
+const businessInfoStorageKey = "invoice-studio.business-info.v1";
+const businessInfoFieldNames = ["businessName", "businessEmail", "businessAddress"];
 
 const receiptCopy = {
   payment: {
@@ -43,6 +45,51 @@ const receiptCopy = {
     previewReferenceLabel: "ORDER OR REFERENCE",
   },
 };
+
+function getStoredBusinessInfo() {
+  try {
+    const storedBusinessInfo = localStorage.getItem(businessInfoStorageKey);
+    if (!storedBusinessInfo) {
+      return {};
+    }
+
+    const businessInfo = JSON.parse(storedBusinessInfo);
+    if (!businessInfo || typeof businessInfo !== "object" || Array.isArray(businessInfo)) {
+      console.error("Saved business information has an invalid format.");
+      return {};
+    }
+    return businessInfo;
+  } catch (error) {
+    console.error("Could not read saved business information:", error);
+    return {};
+  }
+}
+
+function saveBusinessInfo() {
+  const businessInfo = getStoredBusinessInfo();
+  businessInfoFieldNames.forEach((name) => {
+    const field = receiptForm.elements.namedItem(name);
+    if (field) {
+      businessInfo[name] = field.value;
+    }
+  });
+
+  try {
+    localStorage.setItem(businessInfoStorageKey, JSON.stringify(businessInfo));
+  } catch (error) {
+    console.error("Could not save business information:", error);
+  }
+}
+
+function restoreBusinessInfo() {
+  const businessInfo = getStoredBusinessInfo();
+  businessInfoFieldNames.forEach((name) => {
+    const field = receiptForm.elements.namedItem(name);
+    if (field && typeof businessInfo[name] === "string") {
+      field.value = businessInfo[name];
+    }
+  });
+}
 
 function formatReceiptDate(value) {
   if (!value) {
@@ -231,6 +278,14 @@ printReceiptButton.addEventListener("click", () => {
   window.print();
 });
 
+restoreBusinessInfo();
+businessInfoFieldNames.forEach((name) => {
+  const field = receiptForm.elements.namedItem(name);
+  if (field) {
+    field.addEventListener("input", saveBusinessInfo);
+    field.addEventListener("change", saveBusinessInfo);
+  }
+});
 updateSalesItemRemoveButtons();
 updateReceiptType();
 
