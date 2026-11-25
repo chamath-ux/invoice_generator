@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f7fb">
+    <title>Create a Purchase Order | GetBizKit</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="header.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="page form-page invoice-workspace-page">
+      <div data-site-header></div>
+
+      <main>
+        <a class="back-link" href="index.html">Back to tools</a>
+        <section class="form-intro" aria-labelledby="page-title">
+          <p class="eyebrow">Purchasing</p>
+          <h1 id="page-title">Create a purchase order</h1>
+          <p class="intro-copy">Prepare an order for a supplier with item details, delivery date, and totals.</p>
+        </section>
+
+        <div class="invoice-workspace">
+          <form class="details-form" id="purchase-order-form">
+            <section class="form-section" aria-labelledby="buyer-heading">
+              <h2 id="buyer-heading">Buyer</h2>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="business-name">Business name</label>
+                  <input id="business-name" name="businessName" autocomplete="organization" placeholder="Your business name" required>
+                </div>
+                <div class="field">
+                  <label for="business-email">Email address</label>
+                  <input id="business-email" name="businessEmail" type="email" autocomplete="email" placeholder="you@example.com">
+                </div>
+                <div class="field field--wide">
+                  <label for="business-address">Business address</label>
+                  <textarea id="business-address" name="businessAddress" autocomplete="street-address" placeholder="Street, city, postal code"></textarea>
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="supplier-heading">
+              <h2 id="supplier-heading">Supplier</h2>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="supplier-name">Supplier name</label>
+                  <input id="supplier-name" name="supplierName" placeholder="Supplier or company name" required>
+                </div>
+                <div class="field">
+                  <label for="supplier-email">Supplier email</label>
+                  <input id="supplier-email" name="supplierEmail" type="email" placeholder="supplier@example.com">
+                </div>
+                <div class="field field--wide">
+                  <label for="supplier-address">Supplier address</label>
+                  <textarea id="supplier-address" name="supplierAddress" placeholder="Street, city, postal code"></textarea>
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="order-heading">
+              <h2 id="order-heading">Order information</h2>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="purchase-order-number">Purchase order number</label>
+                  <input id="purchase-order-number" name="purchaseOrderNumber" placeholder="e.g. PO-1001" required>
+                </div>
+                <div class="field">
+                  <label for="currency">Currency</label>
+                  <select id="currency" name="currency">
+                    <option value="USD">USD — US Dollar</option>
+                    <option value="EUR">EUR — Euro</option>
+                    <option value="GBP">GBP — British Pound</option>
+                    <option value="INR">INR — Indian Rupee</option>
+                    <option value="LKR">LKR — Sri Lankan Rupee</option>
+                    <option value="CAD">CAD — Canadian Dollar</option>
+                    <option value="AUD">AUD — Australian Dollar</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="order-date">Order date</label>
+                  <input id="order-date" name="orderDate" type="date" required>
+                </div>
+                <div class="field">
+                  <label for="delivery-date">Requested delivery date</label>
+                  <input id="delivery-date" name="deliveryDate" type="date">
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="items-heading">
+              <div class="section-heading-row">
+                <h2 id="items-heading">Items to order</h2>
+                <button class="text-button" id="add-item" type="button">+ Add item</button>
+              </div>
+              <div class="item-list" id="purchase-order-items">
+                <div class="item-row" data-item-row>
+                  <div class="field item-description">
+                    <label for="item-description-1">Description</label>
+                    <input id="item-description-1" data-item-description placeholder="Product or service">
+                  </div>
+                  <div class="field item-quantity">
+                    <label for="item-quantity-1">Qty</label>
+                    <input id="item-quantity-1" data-item-quantity type="number" min="0" step="any" value="1" inputmode="decimal">
+                  </div>
+                  <div class="field item-price">
+                    <label for="item-price-1">Unit price</label>
+                    <input id="item-price-1" data-item-price type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal">
+                  </div>
+                  <button class="icon-button item-remove" type="button" aria-label="Remove item" title="Remove item">
+                    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                      <path d="M5 6h10m-9 0 .6 9h6.8L14 6m-5.5 0V4.5h3V6m-2.5 2.5v4m3-4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="extra-heading">
+              <h2 id="extra-heading">Tax and notes</h2>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="tax-rate">Tax rate (%)</label>
+                  <input id="tax-rate" name="taxRate" type="number" min="0" max="100" step="0.01" placeholder="0">
+                </div>
+                <div class="field field--wide">
+                  <label for="purchase-order-notes">Notes (optional)</label>
+                  <textarea id="purchase-order-notes" name="notes" placeholder="Shipping instructions or other terms"></textarea>
+                </div>
+              </div>
+            </section>
+            <p class="form-hint form-live-hint">The purchase order preview updates as you enter details.</p>
+          </form>
+        </div>
+
+        <div class="invoice-actions">
+          <button class="secondary-button" id="preview-purchase-order" type="button" aria-expanded="false" aria-controls="purchase-order-preview-dialog">Preview order</button>
+          <button class="secondary-button" id="print-purchase-order" type="button">Print order</button>
+          <button class="primary-button preview-download-button" id="download-purchase-order" type="button">Download as PDF</button>
+        </div>
+
+        <div class="invoice-preview-source" aria-hidden="true">
+          <div class="invoice-preview" id="purchase-order-preview">
+            <div class="preview-topline">
+              <span>PURCHASE ORDER</span>
+              <span class="preview-mark" aria-hidden="true">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 3.75h7l4 4v12.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                  <path d="M14 4v4h4M8.5 12h7M8.5 15.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </div>
+
+            <h2 class="preview-business" data-preview="businessName">Your business</h2>
+            <p class="preview-muted preview-preserve" data-preview="businessAddress">Business address</p>
+            <p class="preview-muted" data-preview="businessEmail">Business email</p>
+
+            <div class="preview-rule"></div>
+            <div class="preview-meta">
+              <div>
+                <span class="preview-label">SUPPLIER</span>
+                <p class="preview-strong" data-preview="supplierName">Supplier name</p>
+                <p class="preview-muted preview-preserve" data-preview="supplierAddress"></p>
+                <p class="preview-muted" data-preview="supplierEmail"></p>
+              </div>
+              <div class="preview-invoice-meta">
+                <span class="preview-label">PO NO.</span>
+                <p class="preview-strong" data-preview="purchaseOrderNumber">—</p>
+                <span class="preview-label">ORDER DATE</span>
+                <p class="preview-muted" data-preview="orderDate">—</p>
+                <span class="preview-label">DELIVER BY</span>
+                <p class="preview-muted" data-preview="deliveryDate">—</p>
+              </div>
+            </div>
+
+            <div class="preview-table-wrap">
+              <table class="preview-table">
+                <thead>
+                  <tr><th scope="col">Item</th><th scope="col">Qty</th><th scope="col">Amount</th></tr>
+                </thead>
+                <tbody id="purchase-order-preview-items">
+                  <tr><td>Item description</td><td>1</td><td>$0.00</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="preview-totals">
+              <div><span>Subtotal</span><strong data-preview="subtotal">$0.00</strong></div>
+              <div><span>Tax <span data-preview="taxRateLabel">(0%)</span></span><strong data-preview="taxAmount">$0.00</strong></div>
+              <div class="preview-grand-total"><span>Order total</span><strong data-preview="total">$0.00</strong></div>
+            </div>
+
+            <div class="preview-notes-wrap">
+              <span class="preview-label">NOTES</span>
+              <p class="preview-muted preview-preserve" data-preview="notes">Shipping instructions or other terms</p>
+            </div>
+          </div>
+        </div>
+
+        <dialog class="invoice-preview-dialog" id="purchase-order-preview-dialog" aria-labelledby="purchase-order-preview-title">
+          <div class="invoice-dialog-header">
+            <h2 id="purchase-order-preview-title">Purchase order preview</h2>
+            <button class="icon-button" id="close-purchase-order-preview" type="button" aria-label="Close preview">
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="invoice-dialog-content" id="purchase-order-dialog-content"></div>
+        </dialog>
+      </main>
+    </div>
+
+    <template id="item-template">
+      <div class="item-row" data-item-row>
+        <div class="field item-description"><label>Description<input data-item-description placeholder="Product or service"></label></div>
+        <div class="field item-quantity"><label>Qty<input data-item-quantity type="number" min="0" step="any" value="1" inputmode="decimal"></label></div>
+        <div class="field item-price"><label>Unit price<input data-item-price type="number" min="0" step="0.01" placeholder="0.00" inputmode="decimal"></label></div>
+        <button class="icon-button item-remove" type="button" aria-label="Remove item" title="Remove item">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M5 6h10m-9 0 .6 9h6.8L14 6m-5.5 0V4.5h3V6m-2.5 2.5v4m3-4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </template>
+    <script src="purchase-order.js" defer></script>
+  </body>
+</html>

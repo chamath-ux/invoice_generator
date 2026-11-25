@@ -66,18 +66,58 @@ function getStoredBusinessInfo() {
 }
 
 function saveBusinessInfo() {
-  const businessInfo = getStoredBusinessInfo();
+  const storedBusinessInfo = getStoredBusinessInfo();
+  const businessInfo = {};
   businessInfoFieldNames.forEach((name) => {
     const field = receiptForm.elements.namedItem(name);
     if (field) {
       businessInfo[name] = field.value;
+    } else if (typeof storedBusinessInfo[name] === "string") {
+      businessInfo[name] = storedBusinessInfo[name];
     }
   });
+  if (typeof storedBusinessInfo.logoDataUrl === "string") {
+    businessInfo.logoDataUrl = storedBusinessInfo.logoDataUrl;
+  }
 
   try {
     localStorage.setItem(businessInfoStorageKey, JSON.stringify(businessInfo));
   } catch (error) {
     console.error("Could not save business information:", error);
+  }
+}
+
+function removeSavedDocumentDrafts() {
+  try {
+    [
+      "invoice-studio.invoice-draft.v1",
+      "invoice-studio.quotation-draft.v1",
+      "invoice-studio.receipt-draft.v1",
+      "invoice-studio.purchase-order-draft.v1",
+    ].forEach((key) => localStorage.removeItem(key));
+  } catch (error) {
+    console.error("Could not remove saved document details:", error);
+  }
+}
+
+function removeSavedNonBusinessInfo() {
+  const storedBusinessInfo = getStoredBusinessInfo();
+  const businessInfo = {};
+  businessInfoFieldNames.forEach((name) => {
+    if (typeof storedBusinessInfo[name] === "string") {
+      businessInfo[name] = storedBusinessInfo[name];
+    }
+  });
+  if (typeof storedBusinessInfo.logoDataUrl === "string") {
+    businessInfo.logoDataUrl = storedBusinessInfo.logoDataUrl;
+  }
+
+  if (Object.keys(storedBusinessInfo).length !== Object.keys(businessInfo).length) {
+    try {
+      localStorage.setItem(businessInfoStorageKey, JSON.stringify(businessInfo));
+    } catch (error) {
+      console.error("Could not remove saved non-business details:", error);
+    }
   }
 }
 
@@ -278,6 +318,8 @@ printReceiptButton.addEventListener("click", () => {
   window.print();
 });
 
+removeSavedDocumentDrafts();
+removeSavedNonBusinessInfo();
 restoreBusinessInfo();
 businessInfoFieldNames.forEach((name) => {
   const field = receiptForm.elements.namedItem(name);
