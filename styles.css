@@ -243,8 +243,8 @@ h1 {
 }
 
 .tool-card {
-  min-height: 270px;
-  padding: 26px;
+  min-height: 230px;
+  padding: 22px;
   border-radius: 17px;
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
@@ -271,7 +271,7 @@ h1 {
 }
 
 .tool-card h3 {
-  margin: 22px 0 9px;
+  margin: 17px 0 8px;
   color: #172033;
   font-size: 20px;
   font-weight: 700;
@@ -287,7 +287,7 @@ h1 {
 }
 
 .tool-card .card-action {
-  padding-top: 22px;
+  padding-top: 16px;
 }
 
 .form-page {

@@ -207,7 +207,7 @@ function restoreInvoiceDraft() {
     && typeof item.price === "string");
   if (items.length) {
     invoiceItems.replaceChildren();
-    items.forEach((item, index) => {
+    items.forEach((item) => {
       const newRow = itemTemplate.content.cloneNode(true);
       const row = newRow.querySelector("[data-item-row]");
       row.querySelector("[data-item-description]").value = item.description;
