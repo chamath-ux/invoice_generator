@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f7fb">
+    <title>Create a Delivery Note | GetBizKit</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="header.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="page form-page invoice-workspace-page">
+      <div data-site-header></div>
+      <main>
+        <a class="back-link" href="index.html">Back to tools</a>
+        <section class="form-intro" aria-labelledby="page-title">
+          <p class="eyebrow">Delivery</p>
+          <h1 id="page-title">Create a delivery note</h1>
+          <p class="intro-copy">Record items delivered and provide a place for the recipient to sign.</p>
+        </section>
+
+        <div class="invoice-workspace">
+          <form class="details-form" id="delivery-note-form">
+            <section class="form-section" aria-labelledby="business-heading">
+              <h2 id="business-heading">Your business</h2>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="business-name">Business name</label>
+                  <input id="business-name" name="businessName" autocomplete="organization" placeholder="Your business name" required>
+                </div>
+                <div class="field">
+                  <label for="business-email">Email address</label>
+                  <input id="business-email" name="businessEmail" type="email" autocomplete="email" placeholder="you@example.com">
+                </div>
+                <div class="field field--wide">
+                  <label for="business-address">Business address</label>
+                  <textarea id="business-address" name="businessAddress" autocomplete="street-address" placeholder="Street, city, postal code"></textarea>
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="recipient-heading">
+              <h2 id="recipient-heading">Deliver to</h2>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="recipient-name">Recipient name</label>
+                  <input id="recipient-name" name="recipientName" placeholder="Customer or company name" required>
+                </div>
+                <div class="field">
+                  <label for="recipient-email">Recipient email (optional)</label>
+                  <input id="recipient-email" name="recipientEmail" type="email" placeholder="recipient@example.com">
+                </div>
+                <div class="field field--wide">
+                  <label for="delivery-address">Delivery address</label>
+                  <textarea id="delivery-address" name="deliveryAddress" placeholder="Street, city, postal code"></textarea>
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="delivery-heading">
+              <h2 id="delivery-heading">Delivery information</h2>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="delivery-note-number">Delivery note number</label>
+                  <input id="delivery-note-number" name="deliveryNoteNumber" placeholder="e.g. DN-1001" required>
+                </div>
+                <div class="field">
+                  <label for="delivery-date">Delivery date</label>
+                  <input id="delivery-date" name="deliveryDate" type="date" required>
+                </div>
+                <div class="field field--wide">
+                  <label for="order-reference">Order or reference number (optional)</label>
+                  <input id="order-reference" name="orderReference" placeholder="e.g. SO-1001">
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="items-heading">
+              <div class="section-heading-row">
+                <h2 id="items-heading">Items delivered</h2>
+                <button class="text-button" id="add-item" type="button">+ Add item</button>
+              </div>
+              <div class="item-list" id="delivery-note-items">
+                <div class="item-row delivery-note-item-row" data-item-row>
+                  <div class="field item-description">
+                    <label for="item-description-1">Description</label>
+                    <input id="item-description-1" data-item-description placeholder="Product or service">
+                  </div>
+                  <div class="field item-quantity">
+                    <label for="item-quantity-1">Qty delivered</label>
+                    <input id="item-quantity-1" data-item-quantity type="number" min="0" step="any" value="1" inputmode="decimal">
+                  </div>
+                  <button class="icon-button item-remove" type="button" aria-label="Remove item" title="Remove item">
+                    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                      <path d="M5 6h10m-9 0 .6 9h6.8L14 6m-5.5 0V4.5h3V6m-2.5 2.5v4m3-4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="signature-entry-heading">
+              <h2 id="signature-entry-heading">Received signature</h2>
+              <div class="field">
+                <label for="received-by-signature">Signature of person receiving the items (optional)</label>
+                <textarea id="received-by-signature" name="receivedBySignature" rows="3" maxlength="200" placeholder="Recipient signature"></textarea>
+                <p class="form-hint">Leave blank to sign the printed delivery note by hand.</p>
+              </div>
+            </section>
+
+            <section class="form-section" aria-labelledby="notes-heading">
+              <h2 id="notes-heading">Delivery notes</h2>
+              <div class="field">
+                <label for="delivery-notes">Instructions or comments (optional)</label>
+                <textarea id="delivery-notes" name="notes" placeholder="Add delivery instructions or comments"></textarea>
+              </div>
+            </section>
+            <p class="form-hint form-live-hint">The delivery note preview updates as you enter details.</p>
+          </form>
+        </div>
+
+        <div class="invoice-actions">
+          <button class="secondary-button" id="preview-delivery-note" type="button" aria-expanded="false" aria-controls="delivery-note-preview-dialog">Preview note</button>
+          <button class="secondary-button" id="print-delivery-note" type="button">Print note</button>
+          <button class="primary-button preview-download-button" id="download-delivery-note" type="button">Download as PDF</button>
+        </div>
+
+        <div class="invoice-preview-source" aria-hidden="true">
+          <div class="invoice-preview" id="delivery-note-preview">
+            <div class="preview-topline">
+              <span>DELIVERY NOTE</span>
+              <span class="preview-mark" aria-hidden="true">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 3.75h7l4 4v12.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                  <path d="M14 4v4h4M8.5 12h7M8.5 15.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </div>
+            <h2 class="preview-business" data-preview="businessName">Your business</h2>
+            <p class="preview-muted preview-preserve" data-preview="businessAddress">Business address</p>
+            <p class="preview-muted" data-preview="businessEmail">Business email</p>
+
+            <div class="preview-rule"></div>
+            <div class="preview-meta">
+              <div>
+                <span class="preview-label">DELIVER TO</span>
+                <p class="preview-strong" data-preview="recipientName">Recipient name</p>
+                <p class="preview-muted preview-preserve" data-preview="deliveryAddress"></p>
+                <p class="preview-muted" data-preview="recipientEmail"></p>
+              </div>
+              <div class="preview-invoice-meta">
+                <span class="preview-label">NOTE NO.</span>
+                <p class="preview-strong" data-preview="deliveryNoteNumber">—</p>
+                <span class="preview-label">DELIVERY DATE</span>
+                <p class="preview-muted" data-preview="deliveryDate">—</p>
+                <span class="preview-label">ORDER / REF.</span>
+                <p class="preview-muted" data-preview="orderReference">—</p>
+              </div>
+            </div>
+
+            <div class="preview-table-wrap">
+              <table class="preview-table">
+                <thead>
+                  <tr><th scope="col">Item</th><th scope="col">Qty delivered</th></tr>
+                </thead>
+                <tbody id="delivery-note-preview-items">
+                  <tr><td>Item description</td><td>1</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <section class="delivery-signature-area" aria-label="Recipient confirmation">
+              <p>Please confirm the items above have been received.</p>
+              <div class="delivery-signature-grid">
+                <div>
+                  <span class="preview-label">RECEIVING PERSON (PRINT NAME)</span>
+                  <div class="delivery-signature-line" aria-hidden="true"></div>
+                </div>
+                <div>
+                  <span class="preview-label">SIGNATURE OF RECEIVING PERSON</span>
+                  <p class="delivery-signature-text preview-preserve" data-preview="receivedBySignature"></p>
+                  <div class="delivery-signature-line" aria-hidden="true"></div>
+                </div>
+                <div>
+                  <span class="preview-label">DATE RECEIVED</span>
+                  <div class="delivery-signature-line" aria-hidden="true"></div>
+                </div>
+              </div>
+            </section>
+
+            <div class="preview-notes-wrap">
+              <span class="preview-label">DELIVERY NOTES</span>
+              <p class="preview-muted preview-preserve" data-preview="notes">Delivery instructions or comments</p>
+            </div>
+          </div>
+        </div>
+
+        <dialog class="invoice-preview-dialog" id="delivery-note-preview-dialog" aria-labelledby="delivery-note-preview-title">
+          <div class="invoice-dialog-header">
+            <h2 id="delivery-note-preview-title">Delivery note preview</h2>
+            <button class="icon-button" id="close-delivery-note-preview" type="button" aria-label="Close preview">
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="invoice-dialog-content" id="delivery-note-dialog-content"></div>
+        </dialog>
+      </main>
+    </div>
+
+    <template id="item-template">
+      <div class="item-row delivery-note-item-row" data-item-row>
+        <div class="field item-description"><label>Description<input data-item-description placeholder="Product or service"></label></div>
+        <div class="field item-quantity"><label>Qty delivered<input data-item-quantity type="number" min="0" step="any" value="1" inputmode="decimal"></label></div>
+        <button class="icon-button item-remove" type="button" aria-label="Remove item" title="Remove item">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M5 6h10m-9 0 .6 9h6.8L14 6m-5.5 0V4.5h3V6m-2.5 2.5v4m3-4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </template>
+    <script src="delivery-note.js" defer></script>
+  </body>
+</html>
